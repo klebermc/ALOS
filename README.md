@@ -1,7 +1,7 @@
 # ALOS
 
 Code placeholder for **"ALOS: Acoustic Localization System Applied to Indoor Navigation
-of UAVs"** (ICCSPA 2019), by Kléber M. Cabral, Sérgio R. Barros dos Santos, Cairo L.
+of UAVs"** (ICCSPA 2019), by Kleber M. Cabral, Sérgio R. Barros dos Santos, Cairo L.
 Nascimento Jr., and Sidney N. Givigi Jr., derived from Kleber's Master's work.
 
 **Paper:** [doi:10.1109/ICCSPA.2019.8713689](https://doi.org/10.1109/ICCSPA.2019.8713689) ·
