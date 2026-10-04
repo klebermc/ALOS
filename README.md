@@ -62,7 +62,8 @@ ones, and so are most code comments.
 
 - `firmware/AHRS`, `firmware/AHRS_ArduinoUNO` and `firmware/AHRS_ArduinoUNO_v2` are based
   on the AHRS program by coauthor Prof. Sérgio Ronaldo Barros dos Santos, whose author
-  header is kept. These files are his and are not covered by this repo's MIT license.
+  header is kept; that program in turn derives from the open-source SparkFun 9DOF Razor
+  AHRS project (`sf9domahrs`). These files are not covered by this repo's MIT license.
 - The V-REP remote API bindings are not included; they ship with V-REP.
 
 ## Status
