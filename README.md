@@ -19,37 +19,64 @@ turns the ranges into a position (least squares, Taylor series or approximate ma
 likelihood), and an extended Kalman filter fuses that position with the vehicle's IMU.
 The system gives a 3D position at about 1 Hz.
 
-It was validated with a ground robot driving in a 2.5 m × 3 m area and with a simulated
-quadrotor in V-REP that uses the measured ALOS error characteristics.
-
-Labels inside the figures are in Portuguese, as in the dissertation they were drawn for.
-"SILA" in them is the Portuguese acronym for ALOS.
+It was validated with static accuracy tests, with simulated quadrotors in V-REP that use
+the measured ALOS error characteristics, and with a ground robot driving in a
+2.5 m × 3 m area.
 
 ## How it works
 
-![System overview: ultrasonic emitters on the walls, a receiver on the robot, and a base computer](figures/system_overview.png)
+![System overview: ultrasonic emitters on the walls, a receiver on the robot, and a ground computer](figures/system_overview.png)
 
-The emitters (*Emissores Ultrassônicos*) are fixed around the room at known positions. The
-base computer sends a synchronization message by RF (purple), each emitter answers with an
-ultrasonic burst, and the receiver on the vehicle (*Receptor Ultrassônico*) times how long
-each burst takes to arrive. Those times of flight are the distances d1…d4 in red. The
-computer requests the measurements (green), solves for the position and sends it back to
-the vehicle (blue).
+The ultrasonic emitters are fixed around the room at known positions. The ground computer
+sends a synchronization message by radio (purple), each emitter answers with an ultrasonic
+burst, and the receiver on the vehicle times how long each burst takes to arrive. Those
+times of flight give the distances d1…d4 in red. The computer requests the measurements
+(green), solves for the position and sends the localization data back to the vehicle
+(blue).
 
-![Timing diagram: the eight emitters fire 70 ms apart inside a 1 s cycle](figures/emitter_timing.png)
+![Messages exchanged between the localization software, the fixed station, the emitters and the receiver](figures/messages.png)
 
-Only one emitter can be heard at a time, so they take turns. After the synchronization
-pulse, emitter 1 fires immediately and each following emitter waits 70 ms more than the
-previous one, which is long enough for the echoes of the last burst to die out. The
-remaining ~440 ms of each one-second cycle is used to collect the measurements over the
-radio link and compute the position. This is what sets the 1 Hz update rate.
+Two radio channels are used: 433 MHz for the synchronization message and 2.4 GHz
+(nRF24L01) for requesting measurements and returning data. All radio traffic goes through
+the fixed station, which is connected to the ground computer.
+
+Only one emitter can be heard at a time, so each of the eight emitters gets its own time
+window after the synchronization message (they fire 70 ms apart). The rest of each
+one-second cycle is used to collect the measurements over the radio link and compute the
+position, which sets the 1 Hz update rate.
+
+![One measurement cycle: ultrasonic measurements, then communication and processing, and the resulting delay](figures/measurement_cycle_delay.png)
+
+A consequence of this cycle is a transport delay: a position describes where the receiver
+was around the middle of the measurement window, but it only becomes available after the
+communication and processing time. The delay is about 0.5 s and the simulation study
+below includes it.
+
+![Navigation architecture: ALOS position at 1 Hz, compass at 1 Hz and IMU at 10 Hz feed a Kalman filter on each robot](figures/navigation_architecture.png)
+
+On the vehicle, the ALOS position (1 Hz) is fused with the digital compass (1 Hz) and the
+IMU (10 Hz) to give position and heading estimates at 10 Hz for the controllers. The same
+ALOS installation can serve several robots, each with its own receiver module.
+
+<img src="figures/kalman_filter.png" width="520" alt="Extended Kalman filter: propagation with IMU data at 10 Hz, update with ALOS and compass at 1 Hz">
+
+The fusion is an extended Kalman filter. The IMU drives the propagation step at 10 Hz and
+the ALOS position and compass heading drive the update step at 1 Hz; the filter also
+estimates the sensor biases.
 
 ## Hardware
 
-| Emitter | Receiver | Fixed station |
+| Emitter (fixed) | Receiver (on the robot) | Fixed station |
 |---|---|---|
-| <img src="figures/emitter_module.jpg" width="260"> | <img src="figures/receiver_module.jpg" width="300"> | <img src="figures/fixed_station.png" width="170"> |
-| Arduino Nano, 433 MHz RF receiver for the synchronization pulse, and a driver stage for several ultrasonic transducers pointing in different directions to widen the beam. | Arduino Nano, the same RF receiver, an nRF24L01 radio to report measurements, and an amplifier/filter stage for the receiving transducers. | Arduino with a 433 MHz transmitter (synchronization) and an nRF24L01 transceiver (measurement requests and replies), connected to the PC over USB. |
+| <img src="figures/emitter_module.jpg" width="200"> | <img src="figures/receiver_module.jpg" width="300"> | <img src="figures/fixed_station.png" width="180"> |
+| <img src="figures/emitter_block_diagram.png" width="280"> | <img src="figures/receiver_block_diagram.png" width="300"> | <img src="figures/fixed_station_block_diagram.png" width="300"> |
+| A microcontroller listens for the 433 MHz synchronization message and triggers a circuit that drives the piezoelectric transducers at 10 V peak-to-peak. Several transducers point in different directions to widen the coverage. | The same 433 MHz receiver for synchronization, an nRF24L01 transceiver to return the measurements, and a conditioning circuit between the piezoelectric transducers and the microcontroller. | A microcontroller with a 433 MHz transmitter and an nRF24L01 transceiver, connected to the ground computer over USB. |
+
+![Receiver signal conditioning: 10x amplification, filter, 10x amplification, comparator](figures/receiver_signal_conditioning.png)
+
+In the receiver, the signal from the piezoelectric transducers is amplified, filtered,
+amplified again and passed through a comparator, so the microcontroller sees a clean
+digital edge when the burst arrives.
 
 All three boards were designed in Proteus; the projects, schematic PDFs and Gerber files
 are in `hardware/`.
@@ -72,59 +99,61 @@ calibration.
 
 ### Range measurements
 
-![Histogram of the distance measured between one emitter and one receiver placed 3 m apart](figures/range_histogram_3m.png)
+<img src="figures/range_histogram_3m.png" width="460" alt="Histogram of the distance measured between one emitter and one receiver placed 3 m apart">
 
-Repeated measurements between one emitter and one receiver placed 3 m apart. The
-horizontal axis is the measured distance in metres and the vertical axis the number of
-samples. The readings stay within a few centimetres of the true distance, which is the
-raw accuracy the position solver starts from.
+Repeated measurements between one emitter and one receiver placed 3 m apart. The readings
+stay within a few centimetres of the true distance, which is the raw accuracy the position
+solver starts from.
 
 ### Static position accuracy
 
-![Layout of the nine evaluation points and the eight emitters](figures/evaluation_points.png)
+| Receivers at ground level | Receivers at 70 cm height |
+|---|---|
+| <img src="figures/static_positions_ground.png" width="420"> | <img src="figures/static_positions_70cm.png" width="420"> |
 
-The receiver was placed at nine known points (*Pontos de avaliação*) inside the area
-covered by the eight emitters (*Módulo emissor* 1–8), at several heights, and the position
-computed by each algorithm was compared with the true one. The logs and plotting scripts
-are in `experiments/Calculo_pos_lms_ts_aml/` and `experiments/Comparacao_LMS_TS/`.
+Two receiver modules (red and blue markers) were placed by hand at a sequence of points
+t1, t2, … while ALOS computed their positions once per second. The accuracy of the
+position estimate in this experiment was around 3 cm.
 
-### Ground robot
+### Simulated quadrotors
 
 | | |
 |---|---|
-| <img src="figures/ground_robot.jpg" width="420"> | <img src="figures/ground_robot_experiment_structure.png" width="520"> |
+| <img src="figures/quadrotor_vrep.png" width="380"> | <img src="figures/quadrotor_sim_structure.png" width="560"> |
 
-The robot is a mecanum-wheel platform carrying an Arduino Mega, an IMU and the ALOS
-receiver module. On board, a Kalman filter combines the ALOS position (1 Hz), the compass
-heading (1 Hz) and the accelerometers and gyros (10 Hz) to estimate position and heading
-at 10 Hz, and a position controller drives the motors towards the next waypoint. The
-waypoint list comes from the PC over an XBee link.
+The complete navigation system was tested in simulation with two quadrotors. V-REP runs
+the quadrotor dynamics and attitude controllers; MATLAB/Simulink runs the position
+controllers, the Kalman filter and a model of ALOS; ROS carries the messages between
+them. The ALOS block reproduces what was measured on the real system: 3 cm accuracy,
+0.5 s transport delay and a 1 Hz rate.
 
-![Ground robot following an hourglass trajectory, estimated with ALOS + IMU](figures/ground_robot_hourglass_trajectory.png)
+<img src="figures/sim_filter_comparison.png" width="520" alt="Actual position, ALOS measurement, Kalman filter output and low-pass filtered estimate over time">
 
-The robot was asked to follow an hourglass-shaped path through seven waypoints (black
-dots; the circles are the acceptance radius around each one). Red circles are the raw
-ALOS positions and the blue line is the Kalman filter estimate that the controller used.
-The robot completes the path, with the estimate following the ALOS fixes and filling in
-between them.
+The curves correspond to the numbered points in the block diagram: the actual position
+(I), the delayed 1 Hz ALOS measurement (II), the Kalman filter output (III) and its
+low-pass filtered version (IV) that feeds the position controllers.
 
-![The same run using only IMU integration](figures/ground_robot_dead_reckoning.png)
+| Quadrotor 1 | Quadrotor 2 |
+|---|---|
+| <img src="figures/sim_step_quadrotor1.png" width="400"> | <img src="figures/sim_step_quadrotor2.png" width="400"> |
 
-For comparison, the blue line here is the position obtained by integrating the IMU alone
-on the same data. It quickly drifts out of the test area, which shows that the
-ALOS fixes are what keep the estimate usable.
+Both quadrotors receive a change in the desired X position at the same time while holding
+Y. The plots show the reference, the actual position and the estimated position. In the
+trajectory-tracking task the RMS error between the Kalman filter output and the true
+value was 0.088 m in X, 0.094 m in Y and 1.88° in heading.
 
-### Simulated quadrotor
+### Ground robot (Master's work)
 
 | | |
 |---|---|
-| <img src="figures/quadrotor_vrep.png" width="420"> | <img src="figures/quadrotor_sim_position_hold.png" width="520"> |
+| <img src="figures/ground_robot.jpg" width="440"> | <img src="figures/ground_robot_hourglass_trajectory.png" width="400"> |
 
-The second case study is a quadrotor simulated in V-REP, with the controllers and the
-Kalman filter running in MATLAB/Simulink. The simulated ALOS measurement reproduces the 1 Hz
-rate and the error characteristics measured on the real system. The plots show the X position, Y
-position and heading over time: the true value, the Kalman estimate, its filtered version
-and the reference, with a lead compensator closing the position loop.
+Beyond the paper, the system was also run on a real mecanum-wheel robot carrying an
+Arduino Mega, an IMU and the ALOS receiver module, with the Kalman filter and position
+controller on board. The robot followed an hourglass-shaped path through seven waypoints
+(black dots; the circles are the acceptance radius around each one). Red circles are the
+raw ALOS positions and the blue line is the Kalman filter estimate used by the
+controller.
 
 ## Videos
 
