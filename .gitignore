@@ -1,0 +1,20 @@
+# Videos are published on YouTube, not in git
+videos/
+
+# MATLAB / Simulink
+*.asv
+*.autosave
+slprj/
+*.slxc
+*.mexa64
+*.mexw64
+
+# Proteus backups and workspaces
+*.pdsbak
+*.workspace
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*~
+.vscode/

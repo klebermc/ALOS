@@ -1,0 +1,141 @@
+void initialize_controllers()
+{
+  //Define the controllers' gains
+  
+  //X PID controller gains
+  Kp_X = 9.2;
+  Ki_X = 0.16*0.1;
+  Kd_X = (3.45/0.1) * 0.001;
+  
+  //Y PID controller gains
+  Kp_Y = Kp_X;
+  Ki_Y = Ki_X;
+  Kd_Y = Kd_X;
+//  Kp_Y = 8.9;
+//  Ki_Y = 0.04*0.1;
+//  Kd_Y = (3.5/0.1) * 0.001;
+
+  //Z PID controller gains  
+  //Kp_Z = 20;
+  //Ki_Z = 2.5*0.02;
+  //Kd_Z = 2/0.02;
+
+// *** Trained using height model with non linearities and noise ***
+  Kp_Z=31.87;
+  Ki_Z=1.92*0.02;
+  Kd_Z=(8.42/4)/0.02;
+// ***
+
+  //HEADING PID controller gains
+  Kp_HD = 2.22; //2.22;
+  Ki_HD = 0.01*0.1;
+  Kd_HD = 0.05/0.1;
+}
+
+
+void X_controller()
+{
+  //Lead Controller
+  error_X = desired_pos_I[0] - pos_I[0];
+  //X_out = 0.01*error_X - 0.01*previous_error_X + 0.9048*X_out;
+  X_out = 0.05*error_X - 0.05*previous_error_X + 0.8187*X_out;
+  previous_error_X=error_X;
+
+//  // Inertial X Position
+//  error_X = desired_pos_I[0] - pos_I[0];
+//  dXdt = pos_I[0] - previous_pos[0];
+//  cumul_error[0] = cumul_error[0] + error_X;            // Somatory (integral)
+//  SATURATION(cumul_error[0],100,-100);                   //Saturation
+//  X_out = (Kp_X * error_X) + (Ki_X * cumul_error[0]) - (Kd_X * dXdt);
+//  previous_pos[0] = pos_I[0];
+//  
+//  X_out = X_out*0.5;
+//
+//  // ***************************
+//  //Anti windup filter
+//  if (X_out>2)        cumul_error[0] = previous_cumul_error[0];
+//  else if (X_out<-2)  cumul_error[0] = previous_cumul_error[0];
+//    
+//  previous_cumul_error[0] = cumul_error[0];
+//  // ***************************  
+
+  SATURATION(X_out,2,-2);
+  
+  //Serial.print(error_X); Serial.print(" "); Serial.print(cumul_error[0]); Serial.print(" ");  Serial.println(ANG2uSEC(X_out));
+  SET_PWM_PIN5(ANG2uSEC(-X_out));//ELEVATOR
+}
+
+void Y_controller()
+{
+    //Lead Controller
+  error_Y = desired_pos_I[0] - pos_I[0];
+  //Y_out = 0.01*error_Y - 0.01*previous_error_Y + 0.9048*Y_out;
+  Y_out = 0.05*error_Y - 0.05*previous_error_Y + 0.8187*Y_out;
+  previous_error_Y=error_Y;
+  
+//  // Inertial Y Position
+//  error_Y = desired_pos_I[1] - pos_I[1];                 // Proportional
+//  dYdt = pos_I[1] - previous_pos[1];                     // Derivative
+//  cumul_error[1] = cumul_error[1] + error_Y;             // Somatory (integral)
+//  SATURATION(cumul_error[1],100,-100);                   // Saturation
+//  Y_out = (Kp_Y * error_Y) + (Ki_Y * cumul_error[1]) - (Kd_Y * dYdt);
+//  previous_pos[1] = pos_I[1];
+//
+//  Y_out = Y_out*0.5;
+//
+//  // ***************************  
+//  //Anti windup filter
+//  if (Y_out>2)        cumul_error[1] = previous_cumul_error[1];
+//  else if (Y_out<-2)  cumul_error[1] = previous_cumul_error[1];
+//    
+//  previous_cumul_error[1] = cumul_error[1];
+//  // ***************************  
+
+  SATURATION(Y_out,2,-2);
+  
+  //Serial.print(error_Y); Serial.print(" ");  Serial.println(ANG2uSEC(Y_out));
+  SET_PWM_PIN3(ANG2uSEC(-Y_out));//AILERON
+}
+
+void Z_controller()
+{
+  //Read the IR sensor
+  read_IR_sensor();
+  
+  // Inertial Z Position
+  error_Z = desired_pos_I[2] - pos_I[2];                // Proportional
+  dZdt = pos_I[2] - previous_pos[2];                    // Derivative
+  cumul_error[2] = cumul_error[2] + error_Z;            // Somatory (integral)
+  SATURATION(cumul_error[2],500,0);                     // Saturation
+  Z_out = (Kp_Z * error_Z) + (Ki_Z * cumul_error[2]) - (Kd_Z * dZdt);
+  previous_pos[2] = pos_I[2];
+  
+  SATURATION(Z_out,25,0);
+  
+//  Serial.print(desired_pos_I[2]*100);  Serial.print(" ");  Serial.print(distance2ground);  Serial.print(" ");  Serial.println(Z_out);
+  SET_PWM_PIN2(THRUST2THROTTLE(Z_out));
+}
+
+void HEADING_controller()
+{
+//  if(actual_HEADING > 90) actual_HEADING = previous_HEADING;
+//  if(actual_HEADING < -90) actual_HEADING = previous_HEADING;
+  
+  filtered_HEADING = median(history_HEADING)+10;
+  if (abs(filtered_HEADING-previous_HEADING) > 10) filtered_HEADING = previous_HEADING; //filtering spikes
+  
+  // Heading correction based on magnetometer measurement
+  error_HEADING = desired_HEADING - filtered_HEADING;
+  dHDdt = filtered_HEADING - previous_HEADING;
+  cumul_error_HEADING = cumul_error_HEADING + error_HEADING;      // Somatory (integral)
+  cumul_error_HEADING = max(min(cumul_error_HEADING, 1000), -1000); // saturarion
+  HD_out = Kp_HD *( error_HEADING + (Ki_HD*cumul_error_HEADING) - (Kd_HD*dHDdt) );
+  HD_out = 0.5 * HD_out; //from force output (controller vrep) to angle velocity output
+  previous_HEADING = filtered_HEADING;
+  
+  SATURATION(HD_out,30,-30);
+
+//  Serial.print(filtered_HEADING); Serial.print(" "); Serial.print(HD_out); Serial.print(" "); Serial.println(VEL_ANG2uSEC(HD_out));
+  SET_PWM_PIN6(VEL_ANG2uSEC(HD_out));//RUDDER
+}
+

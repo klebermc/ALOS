@@ -1,0 +1,23 @@
+41L
+media=0.30136
+max error =0.87307
+
+42L
+media=0.16528
+max error =0.56807
+
+42H
+media=0.19702
+max error =0.74436
+
+44L
+media=0.15295
+max error =0.50487
+
+44H
+media=0.18174
+max error =0.67078
+
+42H2L
+media=0.11463
+max error =0.33266

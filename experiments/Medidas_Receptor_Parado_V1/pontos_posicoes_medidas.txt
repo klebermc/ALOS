@@ -1,0 +1,9 @@
+ponto 1 = x0.195  y0.200
+ponto 2 = x0.065  y1.490
+ponto 3 = x0.245  y2.870
+ponto 4 = x1.245  y0.205
+ponto 5 = x1.250  y1.500
+ponto 6 = x1.260  y2.870
+ponto 7 = x2.355  y0.195
+ponto 8 = x2.360  y1.500
+ponto 9 = x2.350  y2.870

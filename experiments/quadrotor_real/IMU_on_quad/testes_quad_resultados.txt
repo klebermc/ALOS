@@ -1,0 +1,7 @@
+teste 1 - tudo parado sem girar hélice
+
+teste 2 - parado com hélice girando 
+
+teste 3 - quadrotor voando
+
+teste 4 - 'voando' com hélice desligada
