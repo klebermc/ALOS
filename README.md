@@ -10,6 +10,10 @@ from Kleber's Master's work at ITA (2017–2018).
 **Paper:** [doi:10.1109/ICCSPA.2019.8713689](https://doi.org/10.1109/ICCSPA.2019.8713689) ·
 **Slides:** [presentation/ICCSPA2019_slides.pdf](presentation/ICCSPA2019_slides.pdf)
 
+![Ground robot driving an hourglass path while the localization interface shows its estimated position](figures/ground_robot_run.gif)
+
+*Ground-robot experiment with the localization interface overlaid, played at 8x speed.*
+
 ## What it does
 
 ALOS is an indoor localization system built from low-cost ultrasonic modules. Eight fixed
