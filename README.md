@@ -157,6 +157,7 @@ controller.
 
 ## Videos
 
+- [Ground robot hourglass trajectory, runs 1-3: robot view next to the live localization GUI](https://youtu.be/HVvtlkrMZus)
 - [Ground robot test with wall-mounted emitters](https://youtu.be/pdVNUMOguDg)
 - [Quadrotor altitude test on a guided test stand](https://youtu.be/xUeMERxlmYQ)
 
