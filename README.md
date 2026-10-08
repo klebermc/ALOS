@@ -1,6 +1,6 @@
 # ALOS
 
-> **Note:** All code in this repository was written by Kleber Cabral. The README documentation and inline code comments were added with AI assistance (Claude).
+> **Note:** The code in this repository was written by Kleber Cabral, except for the files that come from, or are adapted from, other sources, listed under [Third-party code](#third-party-code). The README documentation and inline code comments were added with AI assistance (Claude).
 
 Source code, firmware, PCB designs and experiment data for **"ALOS: Acoustic Localization
 System Applied to Indoor Navigation of UAVs"** (ICCSPA 2019), by Kleber M. Cabral,
@@ -207,6 +207,7 @@ ones, and so are most code comments.
   on the AHRS program by coauthor Prof. Sérgio Ronaldo Barros dos Santos, whose author
   header is kept; that program in turn derives from the open-source SparkFun 9DOF Razor
   AHRS project (`sf9domahrs`). These files are not covered by this repo's MIT license.
+- `firmware/receptor_us/receptor_us_v1.txt` is an early receiver sketch adapted from an example published by the Arduino e Cia blog (its author line is kept).
 - The V-REP remote API bindings are not included; they ship with V-REP.
 
 ## Status
