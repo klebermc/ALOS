@@ -170,7 +170,7 @@ controller.
 | Folder | Contents |
 |---|---|
 | `firmware/` | Arduino sketches. `emissor_us`, `receptor_us` and `modulo_fixo` are the three ALOS modules (emitter, receiver, fixed station). `RoboSolo_*` and `GroundRobot*` run the ground robot (AHRS, Kalman filter, controllers, SD logging, XBee). `quadMainSoftware_*`, `Teste_altura` and `coletar_dados_imu_vooQuad` are for the real quadrotor. `AHRS*` are standalone attitude estimators. |
-| `matlab/location_system/` | The PC side: a MATLAB GUI (`LocationSystem_v2.m`, `interface.m`) that talks to the fixed station over serial, calibrates the speed of sound and computes positions (`LS.m`, `taylor_series.m`, `aml.m`). The GUI layout file `interface.fig` and the logs of the two-receiver session are not included, so the layout has to be rebuilt in GUIDE before the GUI runs. |
+| `matlab/location_system/` | The PC side: a MATLAB GUI (`LocationSystem_v2.m`, `interface.m`) that talks to the fixed station over serial, calibrates the speed of sound and computes positions (`LS.m`, `taylor_series.m`, `aml.m`). The GUI layout file `interface.fig` had the local paths stored inside it overwritten outside MATLAB and has not been reopened in MATLAB since; if it does not open, rebuild the layout in GUIDE. The logs of the two-receiver session are not included. |
 | `matlab/localization_algorithms/` | Offline comparison of trilateration, least squares, Taylor series and AML, and a study of emitter placement. |
 | `matlab/kalman3d/` | Standalone 3D Kalman filter fusing ALOS position with IMU data. |
 | `matlab/tools/` | Small scripts: log import, outlier (Hampel) filter test, accelerometer vibration FFT, calibration simulation. |
